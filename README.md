@@ -21,50 +21,103 @@
 
 **nf-core/clonevdjseq** is a bioinformatics pipeline that ...
 
-<!-- TODO nf-core:
-   Complete this sentence with a 2-3 sentence summary of what types of data the pipeline ingests, a brief overview of the
-   major pipeline sections and the types of output it produces. You're giving an overview to someone new
-   to nf-core here, in 15-20 seconds. For an example, see https://github.com/nf-core/rnaseq/blob/master/README.md#introduction
--->
+**CloneVDJSeq** orchestrates a series of bioinformatics tools to process high-throughput sequencing data for clone VDJ libraries. The pipeline is structured as follows:
 
-<!-- TODO nf-core: Include a figure that guides the user through the major workflow steps. Many nf-core
-     workflows use the "tube map" design for that. See https://nf-co.re/docs/contributing/design_guidelines#examples for examples.   -->
-<!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
+![alt text](resources/image-1.png)
 
-1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
-2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
+1. **Setup Pipeline**: Initializes the analysis environment for each sample plate. This includes setting up directories, preparing raw data, and copying necessary primer and script files. This setup ensures that each plate's data is ready for subsequent processing steps.
+  
+2. **Run HTStream**: Processes raw sequencing reads to perform quality control and primer trimming. This step involves several sub-steps:
+   - **Quality Control**: Utilizes HTStream's `hts_QWindowTrim` to apply quality trimming, ensuring only high-quality bases are retained.
+   - **Primer Trimming**: Uses `hts_Primers` to trim sequencing adapters and primers, reducing potential artifacts in downstream analyses.
+   - **Sequence Screening**: Employs `hts_SeqScreener` to remove unwanted sequences such as vectors or contaminants that could interfere with variant identification.
+   - **Read Merging**: Combines paired-end reads with `hts_Overlapper`, crucial for reconstructing complete antibody sequences.
+   - **Length Filtering**: Applies `hts_LengthFilter` to discard reads that do not meet the length requirements, focusing analysis on sequences of interest.
+
+3. **DADA2 Analysis**: Executes the DADA2 pipeline to identify and quantify sequence variants, broken down into detailed steps:
+   - **Error Rate Learning**: Estimates error rates from the sequencing data, which is critical for accurately modeling and correcting sequencing errors during variant inference.
+   - **Dereplication**: Collapses reads into unique sequences, reducing computational complexity and improving processing efficiency.
+   - **Sample Inference**: Runs the core DADA2 algorithm to infer the sample composition by distinguishing between real biological variants and sequencing errors.
+   - **Merge Pairs**: Combines forward and reverse reads to reconstruct the full-length variants, crucial for antibody sequencing.
+   - **Remove Chimeras**: Identifies and removes chimeric sequences that can result from PCR artifacts, ensuring the purity of variant data.
+
+4. **Aggregate Results and Generate Reports**: Compiles results from all processed plates and generates comprehensive analysis reports using R Markdown. This final step provides a summarized view of the findings, allowing for easy interpretation and further research or development activities.
+
+
+5. **Populate Database and Annotation**: Integrates the processed data into a database for storage and retrieval, enabling easy access to the results for future analyses. This step also annotates the sequences with additional information, such as germline gene usage, CDR/FR regions, and confidence scoring across clone groupings. 
+
+6. **Running Django Server**: Launches a Django server to provide a user-friendly interface for exploring the processed data, including interactive visualizations and search capabilities. This web-based interface allows users to query the database, visualize the results, and download the processed data for further analysis.
+
+
 
 ## Usage
 
-> [!NOTE]
-> If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/usage/installation) on how to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline) with `-profile test` before running the workflow on actual data.
-
-<!-- TODO nf-core: Describe the minimum required steps to execute the pipeline, e.g. how to prepare samplesheets.
-     Explain what rows and columns represent. For instance (please edit as appropriate):
-
-First, prepare a samplesheet with your input data that looks as follows:
-
-`samplesheet.csv`:
-
-```csv
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
-```
-
-Each row represents a fastq file (single-end) or a pair of fastq files (paired end).
-
--->
-
-Now, you can run the pipeline using:
-
-<!-- TODO nf-core: update the following command to include all required parameters for a minimal example -->
-
 ```bash
-nextflow run nf-core/clonevdjseq \
-   -profile <docker/singularity/.../institute> \
-   --input samplesheet.csv \
-   --outdir <OUTDIR>
+nextflow run nf-core/clonevdjseq --input 'samplesheet.tsv' --outdir <output_directory> -profile <docker/singularity/conda>
 ```
+
+### Options:
+```
+   --samplesheet      Path to the samplesheet file.
+   --outdir           The output directory for results.
+   --htstreamOverwrite  Overwrite existing files during HTStream processing [true/false].
+   --dada2Overwrite   Overwrite existing files during DADA2 analysis [true/false].
+   --baseDir          Base directory for processing and output.
+   --rawDataDir       Directory containing raw sequencing data.
+   --nmseqDir         Directory containing scripts and resources needed.
+   --hcPrimers        Path to file containing heavy chain primers.
+   --lcPrimers        Path to file containing light chain primers.
+   --help             Print this help message and exit.
+```
+
+### Sample Sheet Format
+```
+filePrefix	plate	submissionID	Primers	SeqYear	SeqMonth	SeqDay
+TRIMMER_Plate79_S1	TRIMMER0090_P79	59abfa14c2d3	TSO_demux_primers.csv	2022	6	3
+TRIMMER_Plate80_S2	TRIMMER0091_P80	c90a3466b251	TSO_demux_primers.csv	2022	6	3
+TRIMMER_Plate81_S3	TRIMMER0092_P81	de5825783414	TSO_demux_primers.csv	2022	6	3
+TRIMMER_Plate82_S4	TRIMMER0093_P82	d007826dd8d8	TSO_demux_primers.csv	2022	6	3
+TRIMMER_Plate83_S5	TRIMMER0094_P83	53fda6d320bc	TSO_demux_primers.csv	2022	6	3
+TRIMMER_Plate84_S6	TRIMMER0095_P84	988c5850876e	TSO_demux_primers.csv	2022	6	3
+TRIMMER_Plate85_S7	TRIMMER0096_P85	ebe392c6caed	TSO_demux_primers.csv	2022	6	3
+TRIMMER_Plate86_S8	TRIMMER0097_P86	a8606aabb6de	TSO_demux_primers.csv	2022	6	3
+TRIMMER_Plate87_S9	TRIMMER0098_P87	af5a6586b4bf	TSO_demux_primers.csv	2022	6	3
+TRIMMER_Plate88_S10	TRIMMER0099_P88	f6e0a670c6cf	TSO_demux_primers.csv	2022	6	3
+```
+
+
+### Default SMART-Index Layout
+- See full defaault file in `resources/SMARTindex_well.csv`
+```
+"index_name"	"well"
+"01-SMARTindex"	"A1"
+"02-SMARTindex"	"B1"
+"03-SMARTindex"	"C1"
+"04-SMARTindex"	"D1"
+"05-SMARTindex"	"E1"
+"06-SMARTindex"	"F1"
+"07-SMARTindex"	"G1"
+"08-SMARTindex"	"H1"
+"09-SMARTindex"	"A2"
+...
+```
+
+### Default SMART-Index Barcodes
+- See full defaault file in `resources/TSO_demux_primers.csv`
+```
+SampleID	Target_Primer	Primer1ID	TSOBarcode	Primer2ID	TargetSpecificPrimers
+01-SMARTindex_LCprimers	LC_primers	01-SMARTindex	CAGCGTCAGTGGTATCAACGCAGAGTACATGGGG	LC_primers	lc_primers.fasta
+02-SMARTindex_LCprimers	LC_primers	02-SMARTindex	GATCACCAGTGGTATCAACGCAGAGTACATGGGG	LC_primers	lc_primers.fasta
+03-SMARTindex_LCprimers	LC_primers	03-SMARTindex	ACCAGTCAGTGGTATCAACGCAGAGTACATGGGG	LC_primers	lc_primers.fasta
+04-SMARTindex_LCprimers	LC_primers	04-SMARTindex	TGCACGCAGTGGTATCAACGCAGAGTACATGGGG	LC_primers	lc_primers.fasta
+05-SMARTindex_LCprimers	LC_primers	05-SMARTindex	ACATTACAGTGGTATCAACGCAGAGTACATGGGG	LC_primers	lc_primers.fasta
+06-SMARTindex_LCprimers	LC_primers	06-SMARTindex	GTGTAGCAGTGGTATCAACGCAGAGTACATGGGG	LC_primers	lc_primers.fasta
+07-SMARTindex_LCprimers	LC_primers	07-SMARTindex	CTAGTCCAGTGGTATCAACGCAGAGTACATGGGG	LC_primers	lc_primers.fasta
+08-SMARTindex_LCprimers	LC_primers	08-SMARTindex	TGTGCACAGTGGTATCAACGCAGAGTACATGGGG	LC_primers	lc_primers.fasta
+09-SMARTindex_LCprimers	LC_primers	09-SMARTindex	TCAGGAACAGTGGTATCAACGCAGAGTACATGGGG	LC_primers	lc_primers.fasta
+.....
+```
+
 
 > [!WARNING]
 > Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_;
@@ -80,11 +133,24 @@ For more details about the output files and reports, please refer to the
 
 ## Credits
 
-nf-core/clonevdjseq was originally written by Keith Mitchell.
+CloneVDJSeq was developed in collaboration with several key institutions and contributors who provided invaluable expertise and resources:
 
-We thank the following people for their extensive assistance in the development of this pipeline:
+- **UC Davis Bioinformatics Core**: Provided essential bioinformatics support and infrastructure that facilitated the development and optimization of this pipeline. [UC Davis Bioinformatics Core](http://bioinformatics.ucdavis.edu)
+- **Trimmer Lab**: Contributed critical insights, resources, and samples for antibody sequencing and analysis, significantly shaping the pipeline's capabilities in handling complex antibody libraries. [Trimmer Lab](https://trimmer.faculty.ucdavis.edu/)
+- **UC Davis Sequencing Core**: Offered high-throughput sequencing services and scientific and technical support, ensuring high-quality sequencing data for pipeline testing and validation. [DNA Technologies and Expression Analysis Core](http://dnatech.genomecenter.ucdavis.edu)
 
-<!-- TODO nf-core: If applicable, make list of people who have also contributed -->
+
+#### Individual Contributors:
+- **Keith Mitchell** (GitHub: [@keithgmitchell](https://github.com/keithgmitchell)): Lead developer, responsible for the initial conception, design, and implementation of the CloneVDJSeq pipeline. Keith's expertise in bioinformatics has been crucial in addressing the technical challenges associated with antibody sequencing.
+- **Sam Hunter** (GitHub: [@samhunter](https://github.com/samhunter)): Played a pivotal role in refining the pipeline’s analytical algorithms and enhancing its usability and efficiency.
+- **Matt Settles** (GitHub: [@msettles](https://github.com/msettles)): Contributed to the overall strategy and provided oversight, ensuring the pipeline meets the high standards required for academic and clinical research.
+- **James Trimmer**
+- **Lutz Froenicke**
+
+
+The collaboration between these teams and individuals has resulted in a robust pipeline that serves the needs of the scientific community, advancing research in antibody genomics and therapeutics.
+
+
 
 ## Contributions and Support
 
@@ -94,12 +160,11 @@ For further information or help, don't hesitate to get in touch on the [Slack `#
 
 ## Citations
 
-<!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi and badge at the top of this file. -->
-<!-- If you use nf-core/clonevdjseq for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
+**NeuroMabSeq** was detailed in a publication in *Nature Scientific Reports*, which outlines the methodology and validation of the sequencing platform used for this pipeline. [High-volume hybridoma sequencing on the NeuroMabSeq platform enables efficient generation of recombinant monoclonal antibodies and scFvs for neuroscience research](https://www.nature.com/articles/s41598-023-43233-4).
 
-<!-- TODO nf-core: Add bibliography of tools and data used in your pipeline -->
 
-An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
+- **TODO** add the software publication (ongoing)
+
 
 You can cite the `nf-core` publication as follows:
 
@@ -108,3 +173,6 @@ You can cite the `nf-core` publication as follows:
 > Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
 >
 > _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
+
+
+An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file. 
