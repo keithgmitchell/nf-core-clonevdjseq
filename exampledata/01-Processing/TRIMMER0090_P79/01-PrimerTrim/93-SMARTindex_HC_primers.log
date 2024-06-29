@@ -1,0 +1,288 @@
+[ {
+    "Program_details": {
+        "program": "hts_Primers",
+        "version": "1.3.2",
+        "options": {
+            "flip": true,
+            "float": 0,
+            "force": false,
+            "keep": false,
+            "min_primer_matches": 2,
+            "notes": "",
+            "primer_end_mismatches": 0,
+            "primer_mismatches": 0,
+            "primers_3p": "../hc_primers.fasta",
+            "primers_5p": "TTCGAGCAGTGGTATCAACGCAGAGTACATGGGG",
+            "read1-input": [ "/nmspipeline//01-Processing/TRIMMER0090_P79/00-RawData/TRIMMER_Plate79_S1_L001_R1_001_sub.fastq.gz"],
+            "read2-input": [ "/nmspipeline//01-Processing/TRIMMER0090_P79/00-RawData/TRIMMER_Plate79_S1_L001_R2_001_sub.fastq.gz"],
+            "stats-file": "/nmspipeline//01-Processing/TRIMMER0090_P79/01-PrimerTrim/93-SMARTindex_HC_primers.log",
+            "uncompressed": false
+        },
+        "primers": [ ["p5primer1","TTCGAGCAGTGGTATCAACGCAGAGTACATGGGG"], ["Ga3.10for_mIGH3","GGATAGACAGATGGGGCTGTTGTTGT"], ["Ga12HC.10_REV_CHI","ATAGACAGATGGGGGTGTCGTTTTGG"], ["p5primer1","TTCGAGCAGTGGTATCAACGCAGAGTACATGGGG"], ["Ga3.10for_mIGH3","GGATAGACAGATGGGGCTGTTGTTGT"], ["Ga12HC.10_REV_CHI","ATAGACAGATGGGGGTGTCGTTTTGG"] ]
+    },
+    "Fragment": {
+        "in": 100000,
+        "out": 236,
+        "basepairs_in": 60000000,
+        "basepairs_out": 127440,
+        "flipped": 95,
+        "primers_counts": [ ["p5primer1","Ga12HC.10_REV_CHI",236], ["p5primer1","None",244], ["None","Ga3.10for_mIGH3",573], ["None","Ga12HC.10_REV_CHI",25564], ["None","None",73383] ]
+    },
+    "Single_end": {
+        "in": 0,
+        "out": 0,
+        "basepairs_in": 0,
+        "basepairs_out": 0,
+        "primerTrim": 0,
+        "primerBpTrim": 0,
+        "discarded": 0
+    },
+    "Paired_end": {
+        "in": 100000,
+        "out": 236,
+        "discarded": 99764,
+        "Read1": {
+            "basepairs_in": 30000000,
+            "basepairs_out": 62776,
+            "primerTrim": 236,
+            "primerBpTrim": 8024
+        },
+        "Read2": {
+            "basepairs_in": 30000000,
+            "basepairs_out": 64664,
+            "primerTrim": 236,
+            "primerBpTrim": 6136
+        }
+    }
+  }, {
+    "Program_details": {
+        "program": "hts_NTrimmer",
+        "version": "1.3.2",
+        "options": {
+            "append-stats-file": "/nmspipeline//01-Processing/TRIMMER0090_P79/01-PrimerTrim/93-SMARTindex_HC_primers.log",
+            "exclude": true,
+            "force": false,
+            "notes": "",
+            "uncompressed": false
+        }
+    },
+    "Fragment": {
+        "in": 236,
+        "out": 236,
+        "basepairs_in": 127440,
+        "basepairs_out": 127440
+    },
+    "Single_end": {
+        "in": 0,
+        "out": 0,
+        "basepairs_in": 0,
+        "basepairs_out": 0,
+        "rightTrim": 0,
+        "leftTrim": 0,
+        "discarded": 0
+    },
+    "Paired_end": {
+        "in": 236,
+        "out": 236,
+        "discarded": 0,
+        "Read1": {
+            "basepairs_in": 62776,
+            "basepairs_out": 62776,
+            "leftTrim": 0,
+            "rightTrim": 0
+        },
+        "Read2": {
+            "basepairs_in": 64664,
+            "basepairs_out": 64664,
+            "leftTrim": 0,
+            "rightTrim": 0
+        }
+    }
+  }, {
+    "Program_details": {
+        "program": "hts_SeqScreener",
+        "version": "1.3.2",
+        "options": {
+            "append-stats-file": "/nmspipeline//01-Processing/TRIMMER0090_P79/01-PrimerTrim/93-SMARTindex_HC_primers.log",
+            "check-read-2": true,
+            "force": false,
+            "inverse": false,
+            "kmer": 21,
+            "notes": "",
+            "percentage-hits": 0.01,
+            "record": true,
+            "seq": "../aberrant_LC.fasta",
+            "uncompressed": false
+        },
+        "screen_info": {
+            "screenBP": 96,
+            "lookupKmers": 8
+        }
+    },
+    "Fragment": {
+        "in": 236,
+        "out": 236,
+        "basepairs_in": 127440,
+        "basepairs_out": 127440
+    },
+    "Single_end": {
+        "in": 0,
+        "out": 0,
+        "basepairs_in": 0,
+        "basepairs_out": 0,
+        "hits": 0
+    },
+    "Paired_end": {
+        "in": 236,
+        "out": 236,
+        "hits": 0,
+        "Read1": {
+            "basepairs_in": 62776,
+            "basepairs_out": 62776
+        },
+        "Read2": {
+            "basepairs_in": 64664,
+            "basepairs_out": 64664
+        }
+    }
+  }, {
+    "Program_details": {
+        "program": "hts_QWindowTrim",
+        "version": "1.3.2",
+        "options": {
+            "append-stats-file": "/nmspipeline//01-Processing/TRIMMER0090_P79/01-PrimerTrim/93-SMARTindex_HC_primers.log",
+            "avg-qual-score": 10,
+            "force": false,
+            "no-left": true,
+            "no-right": false,
+            "notes": "",
+            "qual-offset": 33,
+            "uncompressed": false,
+            "window-size": 10
+        }
+    },
+    "Fragment": {
+        "in": 236,
+        "out": 236,
+        "basepairs_in": 127440,
+        "basepairs_out": 127010
+    },
+    "Single_end": {
+        "in": 0,
+        "out": 0,
+        "basepairs_in": 0,
+        "basepairs_out": 0,
+        "rightTrim": 0,
+        "leftTrim": 0
+    },
+    "Paired_end": {
+        "in": 236,
+        "out": 236,
+        "Read1": {
+            "basepairs_in": 62776,
+            "basepairs_out": 62625,
+            "leftTrim": 0,
+            "rightTrim": 151
+        },
+        "Read2": {
+            "basepairs_in": 64664,
+            "basepairs_out": 64385,
+            "leftTrim": 0,
+            "rightTrim": 279
+        }
+    }
+  }, {
+    "Program_details": {
+        "program": "hts_Overlapper",
+        "version": "1.3.2",
+        "options": {
+            "append-stats-file": "/nmspipeline//01-Processing/TRIMMER0090_P79/01-PrimerTrim/93-SMARTindex_HC_primers.log",
+            "check-lengths": 20,
+            "force": false,
+            "force-pairs": false,
+            "kmer": 8,
+            "kmer-offset": 1,
+            "max-mismatch": 100,
+            "max-mismatch-errorDensity": 0.25,
+            "min-overlap": 8,
+            "notes": "",
+            "number-of-threads": 1,
+            "uncompressed": false
+        }
+    },
+    "Fragment": {
+        "in": 236,
+        "out": 236,
+        "basepairs_in": 127010,
+        "basepairs_out": 108996,
+        "inserts": {
+            "short": 8,
+            "medium": 209,
+            "long": 19
+        },
+        "overlap_histogram": [ [29,1], [71,1], [160,2], [171,1], [203,1], [247,1], [258,1], [314,1], [418,1], [462,1], [463,1], [464,2], [465,153], [467,5], [468,3], [469,4], [473,8], [475,19], [477,7], [489,1], [493,1], [512,1], [520,1] ]
+    },
+    "Single_end": {
+        "in": 0,
+        "out": 217,
+        "basepairs_in": 0,
+        "basepairs_out": 98806
+    },
+    "Paired_end": {
+        "in": 236,
+        "out": 19,
+        "Read1": {
+            "basepairs_in": 62625,
+            "basepairs_out": 5031
+        },
+        "Read2": {
+            "basepairs_in": 64385,
+            "basepairs_out": 5159
+        }
+    }
+  }, {
+    "Program_details": {
+        "program": "hts_LengthFilter",
+        "version": "1.3.2",
+        "options": {
+            "append-stats-file": "/nmspipeline//01-Processing/TRIMMER0090_P79/01-PrimerTrim/93-SMARTindex_HC_primers.log",
+            "fastq-output": "/nmspipeline//01-Processing/TRIMMER0090_P79/01-PrimerTrim/93-SMARTindex_HC_primers",
+            "force": true,
+            "max-length": 0,
+            "min-length": 385,
+            "no-orphans": false,
+            "notes": "",
+            "stranded": false,
+            "uncompressed": false
+        }
+    },
+    "Fragment": {
+        "in": 236,
+        "out": 208,
+        "basepairs_in": 108996,
+        "basepairs_out": 97193
+    },
+    "Single_end": {
+        "in": 217,
+        "out": 208,
+        "basepairs_in": 98806,
+        "basepairs_out": 97193,
+        "discarded": 9
+    },
+    "Paired_end": {
+        "in": 19,
+        "out": 0,
+        "discarded": 19,
+        "Read1": {
+            "basepairs_in": 5031,
+            "basepairs_out": 0,
+            "discarded": 0
+        },
+        "Read2": {
+            "basepairs_in": 5159,
+            "basepairs_out": 0,
+            "discarded": 0
+        }
+    }
+  }
+]
