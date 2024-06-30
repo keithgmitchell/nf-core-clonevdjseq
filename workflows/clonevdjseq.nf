@@ -20,7 +20,7 @@ include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_clon
 
 // params for pipeline setup (resources distributed for plates in mount dir)
 // get the current directory with pwd using groovy
-params.repobase = "../"
+params.repobase = "/Users/keithmitchell/Desktop/Repositories/nf-core-clonevdjseq/"
 params.resourcesDir = params.repobase + "resources/"
 params.samplesheet = params.resourcesDir + "SampleSheet copy.tsv"
 params.metasheet = params.resourcesDir + "SampleSheet copy.tsv"
@@ -33,18 +33,17 @@ params.rawDataDir = params.repobase + "exampledata/00-RawData"
 
 // mounting params to use in containers
 params.mountDir = "/nmspipeline/"
-params.processingDir = params.mountDir + "01-Processing"
+params.processingDir = params.mountDir + "exampledata/01-Processing"
 params.mountedResources = params.mountDir + "resources/"
 params.mtsamplesheet = params.mountedResources + "SampleSheet copy.tsv"
 params.mtmetasheet = params.mountedResources + "alldata_master.tsv"
 
-//generaal options
+//general options
 params.htstreamOverwrite = false
 params.dada2Overwrite = false
 params.help = false
 
 nextflow.enable.dsl=2
-
 
 
 if (params.help) {
@@ -131,7 +130,6 @@ process runHTStream {
     PREFIX="\${BASE_DIR}/01-PrimerTrim/${TSOBarcode}_${Target_Primer}"
 
     echo "Plate: ${plate}, filePrefix: ${filePrefix}, Primers: ${Primers}, SubmissionID: ${submissionID}, Primer1ID: ${Primer1ID}, TargetSpecificPrimers: ${TargetSpecificPrimers}, TSOBarcode: ${TSOBarcode}, Target_Primer: ${Target_Primer}"
-    
     cd \${BASE_DIR}/00-RawData
     R1_FILES=(\$(ls \${RAW_DATA_DIR}/${filePrefix}*_R1_*))
     R2_FILES=(\$(ls \${RAW_DATA_DIR}/${filePrefix}*_R2_*))
@@ -196,6 +194,7 @@ process aggregateResults {
     tuple val(plate), val(filePrefix), val(Primers), val(submissionID)
     
     container 'keithgmitchell/dada2abseq:latest'
+    containerOptions '-u $(id -u):$(id -g)'
 
     script:
     """

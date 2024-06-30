@@ -1,2 +1,6 @@
 exampledata/01-Processing/*
 exampledata/01-Processing/*/*
+.nextflow.log*
+work/*
+.nextflow/*
+null/*
