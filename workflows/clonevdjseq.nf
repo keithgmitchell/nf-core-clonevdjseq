@@ -20,7 +20,7 @@ include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_clon
 
 // params for pipeline setup (resources distributed for plates in mount dir)
 // get the current directory with pwd using groovy
-params.repobase = "/Users/keithmitchell/Desktop/Repositories/nf-core-clonevdjseq/"
+params.repobase = "/home/bnjenner/software/nf-core-clonevdjseq/"
 params.resourcesDir = params.repobase + "resources/"
 params.samplesheet = params.resourcesDir + "SampleSheet copy.tsv"
 params.metasheet = params.resourcesDir + "SampleSheet copy.tsv"
@@ -133,13 +133,10 @@ process runHTStream {
     cd \${BASE_DIR}/00-RawData
     R1_FILES=(\$(ls \${RAW_DATA_DIR}/${filePrefix}*_R1_*))
     R2_FILES=(\$(ls \${RAW_DATA_DIR}/${filePrefix}*_R2_*))
-
     if [[ \${#R1_FILES[@]} -gt 0 && \${#R2_FILES[@]} -gt 0 ]]; then
         R1=\${R1_FILES[0]}
         R2=\${R2_FILES[0]}
-        EXISTING_FILES_COUNT=\$(ls \${PREFIX}*.log* 2>/dev/null | wc -l)
-
-        if [ "${params.htstreamOverwrite}" == "true" ] || [ "\${EXISTING_FILES_COUNT}" -eq 0 ]; then
+        if [ "${params.htstreamOverwrite}" == "true" ]; then 
             echo "Processing as overwrite is true or no existing files found."
             hts_Primers -d 0 -l 0 -e 0 -r 2 -x -P ${TargetSpecificPrimers} -Q ../${Primer1ID} -1 \${R1} -2 \${R2} -L \${LOG_FILE} |
             hts_NTrimmer -e -A \${LOG_FILE} |
