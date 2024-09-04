@@ -13,58 +13,82 @@ include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_clon
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    VALIDATE INPUTS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+help_message = """
+    Usage:
+        nextflow run nf-core/clonalvdjseq --input <samplesheet.tsv> --rawDataDir <path> --demuxPrimers <demux_primers.fasta> [options]
+
+    Required:
+        --input               Samplesheet in TSV format
+        --rawDataDir          Directory containing raw sequencing data.
+        --demuxPrimers        SMART-Index Barcodes
+
+    Options:
+        --outDir              Name of Output directory for results [default: nf-core-clonevdj_results].
+        --htstreamOverwrite   Overwrite existing files during HTStream processing [true/false].
+        --dada2Overwrite      Overwrite existing files during DADA2 analysis [true/false].
+        --help                Print this help message and exit.
+    """
+
+// Validate Parameters
+if (params.help) {
+    println help_message
+    exit 0
+} else if (!params.input || !params.rawDataDir || !params.demuxPrimers) {
+    println help_message
+    exit 1, "Please provide all required parameters!"
+} 
+
+// BNJ: I hate this solution
+
+if (params.baseDir.endsWith("/")) {
+    params.baseDir = params.baseDir[0..-2]
+}
+if (params.rawDataDir.endsWith("/")) {
+    params.rawDataDir = params.rawDataDir[0..-2]
+}
+
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
 
 // params for pipeline setup (resources distributed for plates in mount dir)
-// get the current directory with pwd using groovy
-params.repobase = "/home/bnjenner/software/nf-core-clonevdjseq/"
-params.resourcesDir = params.repobase + "resources/"
-params.samplesheet = params.resourcesDir + "SampleSheet copy.tsv"
-params.metasheet = params.resourcesDir + "SampleSheet copy.tsv"
-params.TSO_demux_primers = params.resourcesDir + "TSO_demux_primers.csv"
-params.baseDir = params.repobase + "exampledata/01-Processing"
-params.hcPrimers = params.resourcesDir + "hc_primers.fasta"
-params.lcPrimers = params.resourcesDir + "lc_primers.fasta"
-params.rawDataDir = params.repobase + "exampledata/00-RawData"
+// get the current directory with pwdnf-core-clonevdj_results using groovy
+// params.repobase = System.getProperty("user.dir") + "/"
+// params.resourcesDir = params.repobase + "resources/"
+// params.samplesheet = params.resourcesDir + "SampleSheet copy.tsv"
+// params.metasheet = params.resourcesDir + "SampleSheet copy.tsv"
+// params.TSO_demux_primers = params.resourcesDir + "TSO_demux_primers.csv"
+// params.baseDir = params.repobase + "exampledata/01-Processing"
+// params.hcPrimers = params.resourcesDir + "hc_primers.fasta"
+// params.lcPrimers = params.resourcesDir + "lc_primers.fasta"
+// params.rawDataDir = params.repobase + "exampledata/00-RawData"
 
+// params for pipeline
+params.samplesheet = params.input
 
 // mounting params to use in containers
-params.mountDir = "/nmspipeline/"
-params.processingDir = params.mountDir + "exampledata/01-Processing"
-params.mountedResources = params.mountDir + "resources/"
-params.mtsamplesheet = params.mountedResources + "SampleSheet copy.tsv"
-params.mtmetasheet = params.mountedResources + "alldata_master.tsv"
+params.mountDir = params.baseDir + "/" + "nmspipeline"
+params.processingDir = params.mountDir + "/" + "01-Processing"
+// params.mountedResources = params.mountDir + "resources/"
+// params.mtsamplesheet = params.mountedResources + "SampleSheet copy.tsv"
+// params.mtmetasheet = params.mountedResources + "alldata_master.tsv"
 
-//general options
-params.htstreamOverwrite = false
-params.dada2Overwrite = false
-params.help = false
 
 nextflow.enable.dsl=2
 
 
-if (params.help) {
-    println("""
-    Usage:
-        nextflow run nf-core/clonalvdjseq --samplesheet <path> [options]
-
-    Options:
-        --samplesheet      Path to the samplesheet file.
-        --htstreamOverwrite  Overwrite existing files during HTStream processing [true/false].
-        --dada2Overwrite   Overwrite existing files during DADA2 analysis [true/false].
-        --baseDir          Base directory for processing and output.
-        --rawDataDir       Directory containing raw sequencing data.
-        --nmseqDir         Directory containing scripts and resources needed.
-        --hcPrimers        Path to file containing heavy chain primers.
-        --lcPrimers        Path to file containing light chain primers.
-        --help             Print this help message and exit.
-    """)
-    exit 0
-}
-
+println params.baseDir
+println params.samplesheet
+println params.baseDir + "/" + params.rawDataDir
+println params.baseDir + "/" + params.demuxPrimers
 
 
 process setupPipeline {
@@ -78,34 +102,37 @@ process setupPipeline {
 
     script:
     """
-    RAW_DATA_DIR=${params.rawDataDir}
-    BASE_DIR=${params.baseDir}/${plate}
-    NMSEQ_DIR=${params.resourcesDir}
+    RAW_DATA_DIR=${params.baseDir}/${params.rawDataDir}
+    BASE_DIR=${params.baseDir}/${params.outDir}/${plate}
+
     echo "Setting up pipeline for ${plate}"
     mkdir -p \$BASE_DIR/00-RawData/
     mkdir -p \$BASE_DIR/01-PrimerTrimReport/
     mkdir -p \$BASE_DIR/02-Results/
     mkdir -p \$BASE_DIR/01-PrimerTrim/
     
-    r1=\$(find \$RAW_DATA_DIR/ -name '${filePrefix}*_R1_*' | head -n 1)
-    echo \$r1
-    
+    r1=\$(find \$RAW_DATA_DIR/ -name '${filePrefix}*_R1_*' | head -n 1)    
     r2=\$(echo \$r1 | sed 's/_R1_/_R2_/')
+    echo \$r1
     
     cp \$r1 \$BASE_DIR/00-RawData/
     cp \$r2 \$BASE_DIR/00-RawData/
-    cp ${params.hcPrimers} \$BASE_DIR/hc_primers.fasta
-    cp ${params.lcPrimers} \$BASE_DIR/lc_primers.fasta
-    cp \$NMSEQ_DIR/01-build_hts.py \$BASE_DIR/
-    cp \$NMSEQ_DIR/aberrant_LC.fasta \$BASE_DIR/
-    cp \$NMSEQ_DIR/01-PrimerTrimReport/report.RMD \$BASE_DIR/01-PrimerTrimReport/${plate}_report.RMD
-    cp \$NMSEQ_DIR/SMARTindex_well.tsv \$BASE_DIR/02-Results/
-    cp \$NMSEQ_DIR/02-Results/02-Hybridoma-DADA2-analysis.RMD \$BASE_DIR/02-Results/
-    cp \$NMSEQ_DIR/03-annotate-results.py \$BASE_DIR/
-    cp \$BASE_DIR/03-annotate-results.py .     
-    cp \$NMSEQ_DIR/${Primers} \$BASE_DIR/
-    chmod -R 777 ${params.baseDir}
-    chmod -R 777 \$BASE_DIR
+    #cp ${params.hcPrimers} \$BASE_DIR/hc_primers.fasta
+    #cp ${params.lcPrimers} \$BASE_DIR/lc_primers.fasta
+    #cp \$NMSEQ_DIR/01-build_hts.py \$BASE_DIR/
+    #cp \$NMSEQ_DIR/aberrant_LC.fasta \$BASE_DIR/
+    #cp \$NMSEQ_DIR/01-PrimerTrimReport/report.RMD \$BASE_DIR/01-PrimerTrimReport/${plate}_report.RMD
+    #cp \$NMSEQ_DIR/SMARTindex_well.tsv \$BASE_DIR/02-Results/
+    #cp \$NMSEQ_DIR/02-Results/02-Hybridoma-DADA2-analysis.RMD \$BASE_DIR/02-Results/
+    #cp \$NMSEQ_DIR/03-annotate-results.py \$BASE_DIR/
+    #cp \$BASE_DIR/03-annotate-results.py .     
+    #cp \$NMSEQ_DIR/${Primers} \$BASE_DIR/
+
+    curl ${params.dada2_script} > \$BASE_DIR/02-Results/02-Hybridoma-DADA2-analysis.RMD
+    curl ${params.primertrim_script} > \$BASE_DIR/01-PrimerTrimReport/${plate}_report.RMD
+    
+    #chmod -R 776 ${params.baseDir}
+    chmod -R 776 \$BASE_DIR
     """
 }
 
@@ -120,11 +147,11 @@ process runHTStream {
     tuple val(plate), val(filePrefix), val(Primers), val(submissionID)
 
     container 'keithgmitchell/htstream-1.3.3:latest'
-    containerOptions '-u $(id -u):$(id -g)'
+    containerOptions '-u $(id -u):$(id -g) --privileged -v ${params.baseDir}:/nmspipeline'
 
     script:
     """
-    BASE_DIR='${params.processingDir}/${plate}'
+    BASE_DIR='${params.baseDir}/${params.outDir}/${plate}'
     RAW_DATA_DIR="\${BASE_DIR}/00-RawData"
     LOG_FILE="\${BASE_DIR}/01-PrimerTrim/${TSOBarcode}_${Target_Primer}.log"
     PREFIX="\${BASE_DIR}/01-PrimerTrim/${TSOBarcode}_${Target_Primer}"
@@ -164,11 +191,11 @@ process dada2ASVs {
     tuple val(plate), val(filePrefix), val(Primers), val(submissionID)
 
     container 'keithgmitchell/dada2abseq:latest'
-    containerOptions '-u $(id -u):$(id -g)'
+    containerOptions '-u $(id -u):$(id -g) --privileged -v ${params.baseDir}:/nmspipeline'
 
     script:
     """
-    BASE_DIR='${params.processingDir}/${plate}'
+    BASE_DIR='${params.baseDir}/${params.outDir}/${plate}'
     REPORT_FILE="\${BASE_DIR}/02-Results/02-Hybridoma-DADA2-analysis.html"
 
     if [ ${params.dada2Overwrite} == "true" ] || [ ! -f "\${REPORT_FILE}" ]; then
@@ -202,7 +229,7 @@ process aggregateResults {
 
 workflow CLONEVDJSEQ{
 
-    TSOdemux = Channel.fromPath(params.TSO_demux_primers)
+    TSOdemux = Channel.fromPath(params.demuxPrimers)
                     .splitCsv(sep: '\t', header: true)
                     .map { row -> tuple(row.TargetSpecificPrimers, row.TSOBarcode, row.Primer1ID, row.Target_Primer) }
 

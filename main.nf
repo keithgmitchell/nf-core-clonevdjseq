@@ -90,8 +90,7 @@ workflow {
     // WORKFLOW: Run main workflow
     //
     NFCORE_CLONEVDJSEQ (
-        // params.sample_sheet
-        // params.outdir
+
     )
 
     //
