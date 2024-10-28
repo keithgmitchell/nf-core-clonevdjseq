@@ -18,6 +18,7 @@ include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_clon
 */
 
 
+
 // params for pipeline setup (resources distributed for plates in mount dir)
 // get the current directory with pwd using groovy
 params.repobase = "/Users/keithmitchell/Desktop/Repositories/nf-core-clonevdjseq/"
@@ -25,15 +26,15 @@ params.resourcesDir = params.repobase + "resources/"
 params.samplesheet = params.resourcesDir + "SampleSheet copy.tsv"
 params.metasheet = params.resourcesDir + "SampleSheet copy.tsv"
 params.TSO_demux_primers = params.resourcesDir + "TSO_demux_primers.csv"
-params.baseDir = params.repobase + "exampledata/01-Processing"
+params.baseDir = params.repobase + "exampledata/01-Processing/"
 params.hcPrimers = params.resourcesDir + "hc_primers.fasta"
 params.lcPrimers = params.resourcesDir + "lc_primers.fasta"
 params.rawDataDir = params.repobase + "exampledata/00-RawData"
 
 
-// mounting params to use in containers
+// mounting params to use in container
 params.mountDir = "/nmspipeline/"
-params.processingDir = params.mountDir + "exampledata/01-Processing"
+params.processingDir = params.mountDir + "exampledata/01-Processing/"
 params.mountedResources = params.mountDir + "resources/"
 params.mtsamplesheet = params.mountedResources + "SampleSheet copy.tsv"
 params.mtmetasheet = params.mountedResources + "alldata_master.tsv"
@@ -114,7 +115,8 @@ process runHTStream {
     publishDir "results/${plate}", mode: 'copy'
 
     input:
-    tuple val(plate), val(filePrefix), val(Primers), val(submissionID), val(Primer1ID), val(TargetSpecificPrimers), val(TSOBarcode), val(Target_Primer)
+    tuple val(plate), val(filePrefix), val(Primers), val(submissionID), 
+          val(Primer1ID), val(TargetSpecificPrimers), val(TSOBarcode), val(Target_Primer)
 
     output:
     tuple val(plate), val(filePrefix), val(Primers), val(submissionID)
@@ -130,31 +132,30 @@ process runHTStream {
     PREFIX="\${BASE_DIR}/01-PrimerTrim/${TSOBarcode}_${Target_Primer}"
 
     echo "Plate: ${plate}, filePrefix: ${filePrefix}, Primers: ${Primers}, SubmissionID: ${submissionID}, Primer1ID: ${Primer1ID}, TargetSpecificPrimers: ${TargetSpecificPrimers}, TSOBarcode: ${TSOBarcode}, Target_Primer: ${Target_Primer}"
+    
     cd \${BASE_DIR}/00-RawData
     R1_FILES=(\$(ls \${RAW_DATA_DIR}/${filePrefix}*_R1_*))
     R2_FILES=(\$(ls \${RAW_DATA_DIR}/${filePrefix}*_R2_*))
-
-    if [[ \${#R1_FILES[@]} -gt 0 && \${#R2_FILES[@]} -gt 0 ]]; then
-        R1=\${R1_FILES[0]}
-        R2=\${R2_FILES[0]}
-        EXISTING_FILES_COUNT=\$(ls \${PREFIX}*.log* 2>/dev/null | wc -l)
-
-        if [ "${params.htstreamOverwrite}" == "true" ] || [ "\${EXISTING_FILES_COUNT}" -eq 0 ]; then
-            echo "Processing as overwrite is true or no existing files found."
-            hts_Primers -d 0 -l 0 -e 0 -r 2 -x -P ${TargetSpecificPrimers} -Q ../${Primer1ID} -1 \${R1} -2 \${R2} -L \${LOG_FILE} |
-            hts_NTrimmer -e -A \${LOG_FILE} |
-            hts_SeqScreener -C -r -x .01 -k 21 -s ../aberrant_LC.fasta -A \${LOG_FILE} |
-            hts_QWindowTrim -l -q 10 -A \${LOG_FILE} |
-            hts_Overlapper -A \${LOG_FILE} |
-            hts_LengthFilter -m 385 -A \${LOG_FILE} -f \${PREFIX} -F
-        else
-            echo "HTStream output already exists. Skipping processing."
-        fi
+    
+    R1=\${R1_FILES[0]}
+    R2=\${R2_FILES[0]}
+    
+    # Check if any files matching the pattern already exist
+    if test -e "\${PREFIX}"*_primers.log; then
+        echo "HTStream output already exists. Skipping processing."
     else
-        echo "ERROR: Matching R1 or R2 files not found."
+        echo "No existing output found. Processing as overwrite is true or no existing files found."
+        
+        hts_Primers -d 0 -l 0 -e 0 -r 2 -x -P ${TargetSpecificPrimers} -Q ../${Primer1ID} -1 \${R1} -2 \${R2} -L \${LOG_FILE} |
+        hts_NTrimmer -e -A \${LOG_FILE} |
+        hts_SeqScreener -C -r -x .01 -k 21 -s ../aberrant_LC.fasta -A \${LOG_FILE} |
+        hts_QWindowTrim -l -q 10 -A \${LOG_FILE} |
+        hts_Overlapper -A \${LOG_FILE} |
+        hts_LengthFilter -m 385 -A \${LOG_FILE} -f \${PREFIX} -F
     fi
     """
 }
+
 
 process dada2ASVs {
     tag "${plate}"
@@ -174,18 +175,24 @@ process dada2ASVs {
     BASE_DIR='${params.processingDir}/${plate}'
     REPORT_FILE="\${BASE_DIR}/02-Results/02-Hybridoma-DADA2-analysis.html"
 
-    if [ ${params.dada2Overwrite} == "true" ] || [ ! -f "\${REPORT_FILE}" ]; then
-        echo "Generating report for ${plate}"
-        # read params sheet here in the future?
-        Rscript -e "plate='${plate}';mountdir='${params.mountDir}';procdir='${params.processingDir}';submission='${submissionID}';rmarkdown::render('\${BASE_DIR}/02-Results/02-Hybridoma-DADA2-analysis.RMD')"
+    #if [ ${params.dada2Overwrite} == "true" ] || [ ! -f "\${REPORT_FILE}" ]; then
+    echo "Generating report for ${plate}"
+    # read params sheet here in the future?
+    echo "Parameters: plate=${plate}, mountdir=${params.mountDir}, procdir=${params.processingDir}, submission=${submissionID}"
+    # ls this directory path <- paste(procdir, plate, "/01-PrimerTrim/", sep='') ls processingDir/plate/01-PrimerTrim/
+    Rscript -e "plate='${plate}';mountdir='${params.mountDir}';procdir='${params.processingDir}';submission='${submissionID}';rmarkdown::render('\${BASE_DIR}/02-Results/02-Hybridoma-DADA2-analysis.RMD')"
 
-        cp \$BASE_DIR/02-Results/02-Hybridoma-DADA2-analysis.html ${params.mountDir}/02-Reporting/${plate}_report.html
-        # also run the primertrim report
-        Rscript -e "plate='${plate}';mountdir='${params.mountDir}';procdir='${params.processingDir}';rmarkdown::render('\${BASE_DIR}/01-PrimerTrimReport/${plate}_report.RMD')"
+    # cp \$BASE_DIR/02-Results/02-Hybridoma-DADA2-analysis.html ${params.mountDir}02-Reporting/${plate}_report.html
+    # also run the primertrim report
+    Rscript -e "plate='${plate}';mountdir='${params.mountDir}';procdir='${params.processingDir}';rmarkdown::render('\${BASE_DIR}/01-PrimerTrimReport/${plate}_report.RMD')"
+    
+    cd ${params.processingDir}/${plate}
+    pwd
+    python3 03-annotate-results.py 
 
-    else
-        echo "DADA2 report already exists. Skipping processing."
-    fi
+    #else
+    #    echo "DADA2 report already exists. Skipping processing."
+    #fi
     """
 }
 

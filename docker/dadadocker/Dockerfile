@@ -29,6 +29,12 @@ RUN R -e "BiocManager::install('DECIPHER')"
 RUN R -e "install.packages('readr', dependencies = TRUE, repos='http://cran.rstudio.com/')"
 RUN R -e 'install.packages("tidyverse", repos="https://cran.rstudio.com")'
 RUN R -e 'install.packages("pheatmap", repos="https://cran.rstudio.com")'
+RUN pip install biopython
 
+RUN apt-get update && apt-get -y install hmmer
+RUN apt-get install -y python3 python3-pip
+RUN ln -s /usr/bin/python3 /usr/bin/python  # Set alias for python to python3
+RUN pip install git+https://github.com/oxpig/ANARCI.git
+RUN export PATH=$PATH:/path/to/anarci/bin  # Replace with actual path
 
 CMD ["R"]

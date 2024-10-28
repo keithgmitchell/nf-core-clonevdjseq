@@ -19,10 +19,10 @@ nextflow.enable.dsl = 2
 */
 
 include { CLONEVDJSEQ  } from './workflows/clonevdjseq'
-//include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_clonevdjseq_pipeline'
-//include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_clonevdjseq_pipeline'
+// include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_clonevdjseq_pipeline'
+// include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_clonevdjseq_pipeline'
 
-//include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_clonevdjseq_pipeline'
+// include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_clonevdjseq_pipeline'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

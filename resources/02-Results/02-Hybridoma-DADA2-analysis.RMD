@@ -21,20 +21,24 @@ library(stringr)
 # minReadCount = 10  # only samples with at least this many reads will be processed
 ```
 
-### Setup File and Sample Names
-
-
 ```{r Load Data}
 
 # Parameters
-# past plate 
-outp <- paste("/nmspipeline/01-Processing/", plate, "/02-Results/", sep='')
-# submission <- '9468dd86bf4dfd8'
-#plate <- "TRIMMER0097_P86"
-SMART_index_path <- "/nmspipeline/resources/SMARTindex_well.tsv"
 
-#outp <- "./"
-#SMART_index_path <- "./SMARTindex_well.tsv"
+######
+#Parameters: plate=TRIMMER0091_P80, mountdir=/nmspipeline/, procdir=/nmspipeline/exampledata/01-Processing/, submission=c90a3466b251
+# CUSTOM fix
+# plate <- "TRIMMER0091_P80"
+# submission <- 'c90a3466b251'
+# procdir <- "/Users/keithmitchell/Desktop/Repositories/nf-core-clonevdjseq/exampledata/01-Processing/"
+# mountdir <- "/Users/keithmitchell/Desktop/Repositories/nf-core-clonevdjseq/"
+######
+
+
+
+outp <- paste(procdir, plate, "/02-Results/", sep='')
+SMART_index_path <- paste(mountdir, "resources/SMARTindex_well.tsv", sep='')
+
 
 # Function to create default data frame
 create_default_df <- function(plate, wellIDX) {
@@ -78,16 +82,18 @@ sampleData <- tryCatch({
   create_default_df(plate, wellIDX)
 })
 ```
+
+
 ```{r}
 sampleData
 ```
 
+
+
 ```{r}
 # Continue processing with `sampleData`
 #path = "../01-PrimerTrim-keep-aberrant-LC/"
-
-path = paste("/nmspipeline/01-Processing/", plate, "/01-PrimerTrim/", sep='')
-
+path <- paste(procdir, plate, "/01-PrimerTrim/", sep='')
 list.files(path, pattern = "*_SE.fastq.gz")
 
 # Get list of files
@@ -99,6 +105,7 @@ hcindexes = str_remove(basename(hcfiles), "_HC_primers_SE.fastq.gz")
 lcindexes = str_remove(basename(lcfiles), "_LC_primers_SE.fastq.gz")
 print(hcfiles)
 print(lcfiles)
+# echo the hcfile to the stdout
 ```
 
 
@@ -166,6 +173,7 @@ seqtabLC.tab = seqtabLC.tab[order(rowSums(t(seqtabLC)), decreasing = T), ]
 write.table(seqtabLC.tab, file='00-no-filter-seqtab_LC.tsv', sep='\t', row.names=F)
 
 ```
+
 
 ```{r ProcessingFunction}
 # Align two sequences and calculate percent ID as number of matches / length of shorter sequence
@@ -264,8 +272,7 @@ asvToTable = function(st.filtered, st, sampleData, chain){
         }
         for(asv in names(which(r > 0))){ 
             # Add a row to the output table for each ASV in the sample with > 0 reads
-            st.out = rbind(st.out, c(sample_name, plate, s, MabID, chain, 
-                        chain_id, r[asv], signif(100*r[asv]/sum(st[s,]), 3), sum(st[s,]), "Illumina", asv))
+            st.out = rbind(st.out, c(sample_name, plate, s, MabID, chain, r[asv], signif(100*r[asv]/sum(st[s,]), 3), sum(st[s,]), "Illumina", asv))
             i = i + 1
         }
     }
@@ -337,9 +344,9 @@ alignedDNA = AlignSeqs(dna, verbose=F)
 msaR(alignedDNA, menu=F, height=100, overviewbox = F, conservation=T, )
 
 ```
-\
-\
-\
+
+
+
 
 ```{r summary table}
 ## Build Status Table for all samples:

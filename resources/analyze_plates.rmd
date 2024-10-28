@@ -22,11 +22,11 @@ nice_colors = c("#a9a9a9", "#2f4f4f", "#556b2f", "#228b22", "#7f0000", "#808000"
 ```
 
 ```{r}
-# metasheet='/Users/keithmitchell/Desktop/Repositories/clonalvdjseq-uc/clonalvdjseq/resources/alldata_master.tsv'
-# samplesheet='/Users/keithmitchell/Desktop/Repositories/clonalvdjseq-uc/clonalvdjseq/resources/SampleSheet copy.tsv'
-# resources='/Users/keithmitchell/Desktop/Repositories/clonalvdjseq-uc/clonalvdjseq/resources'
-# mountdir='/Users/keithmitchell/Desktop/Repositories/clonalvdjseq-uc/clonalvdjseq'
-# procdir='/Users/keithmitchell/Desktop/Repositories/clonalvdjseq-uc/clonalvdjseq/01-Processing'
+metasheet='/Users/keithmitchell/Desktop/Repositories/clonalvdjseq-uc/clonalvdjseq/resources/alldata_master.tsv'
+samplesheet='/Users/keithmitchell/Desktop/Repositories/clonalvdjseq-uc/clonalvdjseq/resources/SampleSheet copy.tsv'
+resources='/Users/keithmitchell/Desktop/Repositories/clonalvdjseq-uc/clonalvdjseq/resources'
+mountdir='/Users/keithmitchell/Desktop/Repositories/clonalvdjseq-uc/clonalvdjseq'
+procdir='/Users/keithmitchell/Desktop/Repositories/clonalvdjseq-uc/clonalvdjseq/01-Processing'
 ```
 
 ```{r}

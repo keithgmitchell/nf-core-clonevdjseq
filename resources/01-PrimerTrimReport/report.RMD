@@ -18,9 +18,17 @@ library('knitr')
 library('readr')
 library(kableExtra)
 
-#setwd('/bio/CoreWork/2019.11.18-Trimmer-Hybridoma-Seq/2019-12-20-new-191213_M02034-data/Report')
-#opts_knit$set(root.dir = '/bio/CoreWork/2019.11.18-Trimmer-Hybridoma-Seq/2020-02-07-run-rerun_of_27-samples-SMARTPCR/Report')
 
+######
+
+# Use the echo from nextflow to grab this and copilot will fill it in if different. Debugging from Nextflow output in docker sucks
+#Parameters: plate=TRIMMER0091_P80, mountdir=/nmspipeline/, procdir=/nmspipeline/exampledata/01-Processing/, submission=c90a3466b251
+# CUSTOM fix
+# plate <- "TRIMMER0091_P80"
+# submission <- 'c90a3466b251'
+# procdir <- "/Users/keithmitchell/Desktop/Repositories/nf-core-clonevdjseq/exampledata/01-Processing/"
+# mountdir <- "/Users/keithmitchell/Desktop/Repositories/nf-core-clonevdjseq/"
+######
 
 ################## Functions #############
 # Extract specific pieces of data from a set of log files:
@@ -90,8 +98,8 @@ Analysis for samples prepared with SMART-PCR + (10-REV-HC1 or 6-REV-LC or mIGHG 
 ## Heavy Chain:
 
 ```{r Heavy Chain Results, echo=FALSE}
-path = paste(mountdir, "/01-Processing/", plate, "/01-PrimerTrim/", sep='')
-pattern = "HC_primers\\.log"
+path <- paste(procdir, plate, "/01-PrimerTrim/", sep = '')
+pattern <- "_HC_primers.log"
 file_names = list.files(path=path, pattern=pattern, full.names=TRUE)
 hcReadStats = parse_set(pattern, path)
 #colnames(p10RevHc1) = sapply(strsplit(gsub("1_Short_primers_", '', colnames(p10RevHc1)), '_'), '[', 1)
@@ -107,8 +115,7 @@ kable(hcReadStats) %>%
 ## Light Chain:
 
 ```{r Light Chain Results, echo=FALSE}
-path = paste(mountdir, "/01-Processing/", plate, "/01-PrimerTrim/", sep='')
-pattern = "LC_primers\\.log"
+pattern = "_LC_primers.log"
 lcReadStats = parse_set(pattern, path)
 rownames(lcReadStats) = gsub("_LC_primers", '', rownames(lcReadStats))
 
